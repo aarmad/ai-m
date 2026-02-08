@@ -241,53 +241,48 @@ h2 {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
-}
-
-.crosshair::before,
-.crosshair::after {
-    content: '';
-    position: absolute;
-    background-color: var(--accent-color);
-    box-shadow: 0 0 10px var(--accent-glow);
-}
-
-.crosshair::before {
-    top: 50%;
-    left: 50%;
-    width: var(--ch-width, 100%);
-    height: var(--ch-thickness, 2px);
-    transform: translate(-50%, -50%);
-}
-
-.crosshair::after {
-    left: 50%;
-    top: 50%;
-    width: var(--ch-thickness, 2px);
-    height: var(--ch-width, 100%);
-    transform: translate(-50%, -50%);
-}
-
-/* Inner lines */
-.crosshair-inner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 40px;
-    height: 40px;
+    width: 0;
+    height: 0;
+    pointer-events: none;
 }
 
 .ch-line {
     position: absolute;
     background: var(--accent-color);
     box-shadow: 0 0 5px var(--accent-glow);
-    display: none;
+    display: block;
 }
 
-.ch-line.active {
-    display: block;
+.ch-top {
+    left: 50%;
+    bottom: var(--ch-offset, 2px);
+    width: var(--ch-thickness, 2px);
+    height: var(--ch-length, 6px);
+    transform: translateX(-50%);
+}
+
+.ch-bottom {
+    left: 50%;
+    top: var(--ch-offset, 2px);
+    width: var(--ch-thickness, 2px);
+    height: var(--ch-length, 6px);
+    transform: translateX(-50%);
+}
+
+.ch-left {
+    top: 50%;
+    right: var(--ch-offset, 2px);
+    height: var(--ch-thickness, 2px);
+    width: var(--ch-length, 6px);
+    transform: translateY(-50%);
+}
+
+.ch-right {
+    top: 50%;
+    left: var(--ch-offset, 2px);
+    height: var(--ch-thickness, 2px);
+    width: var(--ch-length, 6px);
+    transform: translateY(-50%);
 }
 
 .ch-dot {
@@ -296,6 +291,8 @@ h2 {
     left: 50%;
     transform: translate(-50%, -50%);
     background: var(--accent-color);
+    width: var(--ch-dot-size, 2px);
+    height: var(--ch-dot-size, 2px);
     border-radius: 50%;
     display: none;
 }

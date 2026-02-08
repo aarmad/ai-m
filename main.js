@@ -53,9 +53,9 @@ class AimTrainer {
         this.spawnedTargetsAt = new Map(); // target.uuid -> timestamp
         this.isPaused = false;
 
-        // Movement variables
-        this.moveSpeed = 0.15;
-        this.velocity = new THREE.Vector3();
+        // Movement variables (Valorant speed 5.4 m/s)
+        this.moveSpeed = 5.4;
+        this.clock = new THREE.Clock();
         this.keys = {
             w: false,
             a: false,
@@ -194,6 +194,7 @@ class AimTrainer {
         this.setupRenderer();
         this.setupLights();
         this.setupEnvironment();
+        this.setupWeapon();
         this.addEventListeners();
         this.animate();
     }
@@ -244,6 +245,50 @@ class AimTrainer {
 
         // Background
         this.scene.background = new THREE.Color(0x050505);
+    }
+
+    setupWeapon() {
+        this.weaponGroup = new THREE.Group();
+
+        // Arcane Sheriff Stylized Placeholder
+        const bodyGeo = new THREE.BoxGeometry(0.1, 0.15, 0.4);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+
+        const barrelGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5, 32);
+        const barrelMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.9, roughness: 0.1 });
+        const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+        barrel.rotation.x = Math.PI / 2;
+        barrel.position.z = -0.3;
+        barrel.position.y = 0.03;
+
+        const handleGeo = new THREE.BoxGeometry(0.08, 0.2, 0.1);
+        const handle = new THREE.Mesh(handleGeo, bodyMat);
+        handle.position.y = -0.15;
+        handle.position.z = 0.1;
+        handle.rotation.x = -0.3;
+
+        // Arcane Glowing bits
+        const glowGeo = new THREE.BoxGeometry(0.11, 0.05, 0.1);
+        const glowMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, emissive: 0x00d2ff, emissiveIntensity: 2 });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        glow.position.y = 0.05;
+        glow.position.z = -0.1;
+
+        this.weaponGroup.add(body, barrel, handle, glow);
+
+        // Hand Placeholder
+        const handGeo = new THREE.BoxGeometry(0.15, 0.15, 0.2);
+        const handMat = new THREE.MeshStandardMaterial({ color: 0x8d5524 }); // Skin tone
+        const hand = new THREE.Mesh(handGeo, handMat);
+        hand.position.y = -0.15;
+        hand.position.z = 0.15;
+        this.weaponGroup.add(hand);
+
+        // Position weapon relative to camera
+        this.weaponGroup.position.set(0.3, -0.4, -0.6);
+        this.camera.add(this.weaponGroup);
+        this.scene.add(this.camera); // Ensure camera is in scene to see its children
     }
 
     addEventListeners() {
@@ -453,32 +498,53 @@ class AimTrainer {
     parseCrosshairCode(code) {
         if (!code) return;
         try {
-            const params = {};
+            // Valorant code structure: 0;P;c;5;o;1;0t;1;0l;2;0o;2;0a;1;0f;0;1b;0;S;c;1;s;0.64;o;1
             const parts = code.split(';');
-            for (let i = 0; i < parts.length; i += 2) {
-                if (parts[i] && parts[i + 1]) params[parts[i]] = parts[i + 1];
+            const params = {};
+
+            // Standard parsing
+            for (let i = 0; i < parts.length; i++) {
+                const key = parts[i];
+                const next = parts[i + 1];
+                if (isNaN(key) && next !== undefined && !isNaN(next)) {
+                    params[key] = parseFloat(next);
+                }
             }
 
-            // Simple map: 0t = thickness, 0l = length, 0o = offset, 0a = opacity, c = color
             const root = document.documentElement;
 
-            // Color map (Valorant indices)
+            // Color mapping
             const colors = ['#ffffff', '#00ff00', '#ffff00', '#00ff00', '#ffff00', '#00ffff', '#ff00ff', '#ffffff'];
             if (params['c'] !== undefined) {
-                const cIndex = parseInt(params['c']);
+                const cIndex = Math.floor(params['c']);
                 if (colors[cIndex]) root.style.setProperty('--accent-color', colors[cIndex]);
             }
 
-            const thickness = params['0t'] || 2;
-            const length = params['0l'] || 6;
-            const offset = params['0o'] || 2;
-            const opacity = params['0a'] || 1;
+            // Thickness (0t), Length (0l), Offset (0o), Opacity (0a)
+            const thickness = params['0t'] !== undefined ? params['0t'] : 2;
+            const length = params['0l'] !== undefined ? params['0l'] : 6;
+            const offset = params['0o'] !== undefined ? params['0o'] : 2;
 
             root.style.setProperty('--ch-thickness', `${thickness}px`);
-            root.style.setProperty('--ch-width', `${length * 2 + offset * 2}px`);
-            // We could add more complex CSS but this covers basics
+            root.style.setProperty('--ch-length', `${length}px`);
+            root.style.setProperty('--ch-offset', `${offset}px`);
+
+            // Center dot (0s)
+            const dotActive = params['0s'] === 1;
+            const dotSize = params['0pd'] || 2;
+            const dot = document.getElementById('ch-dot');
+            if (dot) {
+                dot.classList.toggle('active', dotActive);
+                root.style.setProperty('--ch-dot-size', `${dotSize}px`);
+            }
+
+            // Hide/Show lines
+            const linesActive = params['0b'] !== 0; // Outer lines usually 1b
+            const lines = document.querySelectorAll('.ch-line');
+            lines.forEach(l => l.style.display = linesActive ? 'block' : 'none');
+
         } catch (e) {
-            console.error("Invalid crosshair code", e);
+            console.error("Erreur parsing crosshair:", e);
         }
     }
 
@@ -569,8 +635,12 @@ class AimTrainer {
         });
         const target = new THREE.Mesh(geometry, material);
 
+        // Calculate safe Y range (Floor at -3)
+        const minY = -2.5 + task.size;
+        const maxY = 5 - task.size;
+
         target.position.x = (Math.random() - 0.5) * task.xRange;
-        target.position.y = (task.id === 'headshot') ? 0 : (Math.random() - 0.5) * task.yRange;
+        target.position.y = (task.id === 'headshot') ? 0 : (Math.random() * (maxY - minY) + minY);
         target.position.z = -5;
 
         if (task.type === 'tracking') {
@@ -599,6 +669,16 @@ class AimTrainer {
             this.handleHit(hit);
         }
         this.updateHUD();
+
+        // Weapon Kickback Animation
+        if (this.weaponGroup) {
+            this.weaponGroup.position.z += 0.05;
+            this.weaponGroup.rotation.x -= 0.1;
+            setTimeout(() => {
+                this.weaponGroup.position.z -= 0.05;
+                this.weaponGroup.rotation.x += 0.1;
+            }, 50);
+        }
     }
 
     handleHit(target) {
@@ -719,6 +799,7 @@ class AimTrainer {
     }
 
     handleMovement() {
+        const delta = this.clock.getDelta();
         const direction = new THREE.Vector3();
         const front = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
         const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
@@ -735,7 +816,7 @@ class AimTrainer {
         if (this.keys.d) direction.add(right);
 
         if (direction.length() > 0) {
-            direction.normalize().multiplyScalar(this.moveSpeed);
+            direction.normalize().multiplyScalar(this.moveSpeed * delta);
             this.camera.position.add(direction);
         }
 
