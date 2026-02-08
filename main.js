@@ -200,8 +200,8 @@ class AimTrainer {
 
     setupRenderer() {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        // Reculé de 5 unités pour voir plus grand (Valorant distance standard environ)
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        // Position de la caméra standard Valorant (Fov 103H / 71V)
         this.camera.position.set(0, 0, 5);
     }
 
@@ -219,17 +219,31 @@ class AimTrainer {
     }
 
     setupEnvironment() {
-        // Grid floor for depth perception
-        const size = 20;
-        const divisions = 20;
-        const gridHelper = new THREE.GridHelper(size, divisions, 0x333333, 0x111111);
-        gridHelper.rotation.x = Math.PI / 2;
-        gridHelper.position.z = -5;
+        // Sol solide (Floor)
+        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -3;
+        this.scene.add(floor);
+
+        // Grid helper on top of floor for better movement perception
+        const gridHelper = new THREE.GridHelper(100, 50, 0x333333, 0x222222);
+        gridHelper.position.y = -2.99;
         this.scene.add(gridHelper);
 
-        // Background / Fog
+        // Wall grid (Optionnel, gardé pour la profondeur derrière les cibles)
+        const wallGrid = new THREE.GridHelper(20, 20, 0x222222, 0x111111);
+        wallGrid.rotation.x = Math.PI / 2;
+        wallGrid.position.z = -10;
+        this.scene.add(wallGrid);
+
+        // Background
         this.scene.background = new THREE.Color(0x050505);
-        this.scene.fog = new THREE.Fog(0x050505, 5, 15);
     }
 
     addEventListeners() {
