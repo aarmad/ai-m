@@ -251,8 +251,8 @@ class AimTrainer {
         this.weaponGroup = new THREE.Group();
 
         // Lumière attachée à la caméra pour toujours éclairer l'arme et les mains
-        const viewLight = new THREE.PointLight(0xffffff, 0.8, 10);
-        viewLight.position.set(0, 0.5, 0.2);
+        const viewLight = new THREE.PointLight(0xffffff, 1.2, 5);
+        viewLight.position.set(0, 0.3, -0.2);
         this.camera.add(viewLight);
 
         // Charger le modèle 3D du Sheriff Arcane
@@ -265,40 +265,70 @@ class AimTrainer {
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
 
-            // Auto-scaling (On veut que l'arme fasse environ 0.3 unités de long)
+            // Auto-scaling — arme ~0.3 unités de long
             const maxDim = Math.max(size.x, size.y, size.z) || 1;
             const targetScale = 0.3 / maxDim;
             pistol.scale.set(targetScale, targetScale, targetScale);
 
-            // Centrer l'objet par rapport à son origine
+            // Centrer l'objet
             pistol.position.x = -center.x * targetScale;
             pistol.position.y = -center.y * targetScale;
             pistol.position.z = -center.z * targetScale;
 
-            // Mettre dans un groupe pour le manipuler globalement
             const wrapper = new THREE.Group();
             wrapper.add(pistol);
 
-            // Ajuster son orientation pour viser le centre du réticule
-            // L'arme est à droite (x > 0), donc on la tourne légèrement vers la gauche
-            wrapper.rotation.y = -Math.PI / 2 + 0.15;
-            // Légère inclinaison vers le haut pour voir le canon
-            wrapper.rotation.x = 0.05;
+            // Le canon du GLB pointe le long de l'axe X positif selon le screenshot.
+            // Pour le faire pointer vers -Z (en avant dans Three.js), on tourne de +PI/2 sur Y.
+            wrapper.rotation.y = Math.PI / 2;
+            // Légère inclinaison vers le bas pour avoir l'angle "viewmodel"
+            wrapper.rotation.x = 0.08;
 
             this.weaponGroup.add(wrapper);
-            console.log("Pistol orienté vers la cible !");
         },
-            (xhr) => {
-                console.log((xhr.loaded / xhr.total * 100) + '% chargé');
-            },
+            undefined,
             (error) => {
                 console.error("Erreur de chargement du modèle 3D :", error);
             });
 
-        // Position de l'arme en bas à droite
-        this.weaponGroup.position.set(0.13, -0.18, -0.35);
+        // --- Mains ---
+        const skinMat = new THREE.MeshStandardMaterial({
+            color: 0xc68642,
+            roughness: 0.7,
+            metalness: 0.05
+        });
+
+        // Paume / main droite (tient la poignée)
+        const palmGeo = new THREE.BoxGeometry(0.10, 0.13, 0.14);
+        const palm = new THREE.Mesh(palmGeo, skinMat);
+        palm.position.set(0, -0.09, 0.06);
+        palm.rotation.x = -0.3;
+
+        // Doigts (4 doigts regroupés)
+        const fingersGeo = new THREE.BoxGeometry(0.10, 0.05, 0.14);
+        const fingers = new THREE.Mesh(fingersGeo, skinMat);
+        fingers.position.set(0, -0.16, 0.04);
+        fingers.rotation.x = -0.5;
+
+        // Pouce
+        const thumbGeo = new THREE.BoxGeometry(0.04, 0.09, 0.06);
+        const thumb = new THREE.Mesh(thumbGeo, skinMat);
+        thumb.position.set(-0.07, -0.07, 0.02);
+        thumb.rotation.z = 0.5;
+        thumb.rotation.x = 0.2;
+
+        // Bras / avant-bras visible en bas
+        const wristGeo = new THREE.BoxGeometry(0.11, 0.22, 0.12);
+        const wrist = new THREE.Mesh(wristGeo, skinMat);
+        wrist.position.set(0.01, -0.28, 0.10);
+        wrist.rotation.x = -0.1;
+
+        this.weaponGroup.add(palm, fingers, thumb, wrist);
+
+        // Positionner l'ensemble arme+mains en bas à droite de l'écran
+        this.weaponGroup.position.set(0.15, -0.22, -0.35);
         this.camera.add(this.weaponGroup);
-        this.scene.add(this.camera); // Ensure camera is in scene
+        this.scene.add(this.camera);
     }
 
     addEventListeners() {
