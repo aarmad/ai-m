@@ -250,6 +250,11 @@ class AimTrainer {
     setupWeapon() {
         this.weaponGroup = new THREE.Group();
 
+        // Lumière attachée à la caméra pour toujours éclairer l'arme et les mains
+        const viewLight = new THREE.PointLight(0xffffff, 0.8, 10);
+        viewLight.position.set(0, 0.5, 0.2);
+        this.camera.add(viewLight);
+
         // Charger le modèle 3D du Sheriff Arcane
         const loader = new GLTFLoader();
         loader.load('./assets/pistol/source/Arcane Sheriff.glb', (gltf) => {
@@ -303,7 +308,11 @@ class AimTrainer {
         this.weaponGroup.add(rightHand, leftHand);
 
         // Position of the whole weapon/hand group relative to the camera
-        this.weaponGroup.position.set(0.3, -0.35, -0.5);
+        // Rapproché du centre et monté pour être visible à l'écran
+        this.weaponGroup.position.set(0.15, -0.2, -0.4);
+        // Rotation légère pour pointer vers le centre
+        this.weaponGroup.rotation.y = 0.05;
+
         this.camera.add(this.weaponGroup);
         this.scene.add(this.camera); // Ensure camera is in scene to see its children
     }
