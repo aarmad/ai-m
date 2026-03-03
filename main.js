@@ -279,12 +279,14 @@ class AimTrainer {
             const wrapper = new THREE.Group();
             wrapper.add(pistol);
 
-            // Ajuster son orientation et sa position dans la main
-            wrapper.rotation.y = -Math.PI / 2; // Rotation de 90 degrés pour pointer vers l'avant
-            wrapper.position.set(0.04, -0.05, -0.05);
+            // Ajuster son orientation pour viser le centre du réticule
+            // L'arme est à droite (x > 0), donc on la tourne légèrement vers la gauche
+            wrapper.rotation.y = -Math.PI / 2 + 0.15;
+            // Légère inclinaison vers le haut pour voir le canon
+            wrapper.rotation.x = 0.05;
 
             this.weaponGroup.add(wrapper);
-            console.log("Pistol chargé avec succès !");
+            console.log("Pistol orienté vers la cible !");
         },
             (xhr) => {
                 console.log((xhr.loaded / xhr.total * 100) + '% chargé');
@@ -293,44 +295,10 @@ class AimTrainer {
                 console.error("Erreur de chargement du modèle 3D :", error);
             });
 
-        // Modélisation des mains tenant l'arme de façon plus réaliste
-        const skinMat = new THREE.MeshStandardMaterial({
-            color: 0xd2996a, // Couleur peau
-            roughness: 0.6,
-            metalness: 0.1
-        });
-
-        // Main droite (Tient la poignée)
-        const rightHandGeo = new THREE.BoxGeometry(0.12, 0.15, 0.18);
-        const rightHand = new THREE.Mesh(rightHandGeo, skinMat);
-        rightHand.position.set(0.04, -0.12, 0.1);
-        rightHand.rotation.z = -0.1;
-        rightHand.rotation.x = -0.2;
-
-        // Pouce droit
-        const thumbGeo = new THREE.BoxGeometry(0.04, 0.08, 0.12);
-        const rightThumb = new THREE.Mesh(thumbGeo, skinMat);
-        rightThumb.position.set(-0.06, 0.02, 0.05);
-        rightThumb.rotation.x = -0.4;
-        rightHand.add(rightThumb);
-
-        // Main gauche (Soutient la base)
-        const leftHandGeo = new THREE.BoxGeometry(0.14, 0.12, 0.20);
-        const leftHand = new THREE.Mesh(leftHandGeo, skinMat);
-        leftHand.position.set(-0.08, -0.15, 0.02);
-        leftHand.rotation.z = 0.4;
-        leftHand.rotation.y = 0.3;
-
-        this.weaponGroup.add(rightHand, leftHand);
-
-        // Position of the whole weapon/hand group relative to the camera
-        // Rapproché du centre et monté pour être visible à l'écran
-        this.weaponGroup.position.set(0.15, -0.2, -0.4);
-        // Rotation légère pour pointer vers le centre
-        this.weaponGroup.rotation.y = 0.05;
-
+        // Position de l'arme en bas à droite
+        this.weaponGroup.position.set(0.13, -0.18, -0.35);
         this.camera.add(this.weaponGroup);
-        this.scene.add(this.camera); // Ensure camera is in scene to see its children
+        this.scene.add(this.camera); // Ensure camera is in scene
     }
 
     addEventListeners() {
