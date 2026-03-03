@@ -280,7 +280,7 @@ class AimTrainer {
             wrapper.add(pistol);
 
             // Ajuster son orientation et sa position dans la main
-            wrapper.rotation.y = Math.PI;
+            wrapper.rotation.y = -Math.PI / 2; // Rotation de 90 degrés pour pointer vers l'avant
             wrapper.position.set(0.04, -0.05, -0.05);
 
             this.weaponGroup.add(wrapper);
