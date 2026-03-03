@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 class AimTrainer {
     constructor() {
         this.canvas = document.querySelector('#game-canvas');
@@ -250,43 +250,60 @@ class AimTrainer {
     setupWeapon() {
         this.weaponGroup = new THREE.Group();
 
-        // Arcane Sheriff Stylized Placeholder
-        const bodyGeo = new THREE.BoxGeometry(0.1, 0.15, 0.4);
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        // Charger le modèle 3D du Sheriff Arcane
+        const loader = new GLTFLoader();
+        loader.load('/assets/pistol/source/Arcane Sheriff.glb', (gltf) => {
+            const pistol = gltf.scene;
+            // Échelle et orientation à ajuster finement selon l'export du modèle
+            pistol.scale.set(0.04, 0.04, 0.04);
+            pistol.rotation.y = Math.PI;
+            pistol.position.set(0, 0.05, -0.1);
 
-        const barrelGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5, 32);
-        const barrelMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.9, roughness: 0.1 });
-        const barrel = new THREE.Mesh(barrelGeo, barrelMat);
-        barrel.rotation.x = Math.PI / 2;
-        barrel.position.z = -0.3;
-        barrel.position.y = 0.03;
+            // Améliorer le rendu du pistolet
+            pistol.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.metalness = 0.8;
+                    child.material.roughness = 0.2;
+                }
+            });
 
-        const handleGeo = new THREE.BoxGeometry(0.08, 0.2, 0.1);
-        const handle = new THREE.Mesh(handleGeo, bodyMat);
-        handle.position.y = -0.15;
-        handle.position.z = 0.1;
-        handle.rotation.x = -0.3;
+            this.weaponGroup.add(pistol);
+        }, undefined, (error) => {
+            console.error("Erreur de chargement du modèle 3D :", error);
+        });
 
-        // Arcane Glowing bits
-        const glowGeo = new THREE.BoxGeometry(0.11, 0.05, 0.1);
-        const glowMat = new THREE.MeshStandardMaterial({ color: 0x00d2ff, emissive: 0x00d2ff, emissiveIntensity: 2 });
-        const glow = new THREE.Mesh(glowGeo, glowMat);
-        glow.position.y = 0.05;
-        glow.position.z = -0.1;
+        // Modélisation des mains tenant l'arme de façon plus réaliste
+        const skinMat = new THREE.MeshStandardMaterial({
+            color: 0xd2996a, // Couleur peau
+            roughness: 0.6,
+            metalness: 0.1
+        });
 
-        this.weaponGroup.add(body, barrel, handle, glow);
+        // Main droite (Tient la poignée)
+        const rightHandGeo = new THREE.BoxGeometry(0.12, 0.15, 0.18);
+        const rightHand = new THREE.Mesh(rightHandGeo, skinMat);
+        rightHand.position.set(0.04, -0.12, 0.1);
+        rightHand.rotation.z = -0.1;
+        rightHand.rotation.x = -0.2;
 
-        // Hand Placeholder
-        const handGeo = new THREE.BoxGeometry(0.15, 0.15, 0.2);
-        const handMat = new THREE.MeshStandardMaterial({ color: 0x8d5524 }); // Skin tone
-        const hand = new THREE.Mesh(handGeo, handMat);
-        hand.position.y = -0.15;
-        hand.position.z = 0.15;
-        this.weaponGroup.add(hand);
+        // Pouce droit
+        const thumbGeo = new THREE.BoxGeometry(0.04, 0.08, 0.12);
+        const rightThumb = new THREE.Mesh(thumbGeo, skinMat);
+        rightThumb.position.set(-0.06, 0.02, 0.05);
+        rightThumb.rotation.x = -0.4;
+        rightHand.add(rightThumb);
 
-        // Position weapon relative to camera
-        this.weaponGroup.position.set(0.3, -0.4, -0.6);
+        // Main gauche (Soutient la base)
+        const leftHandGeo = new THREE.BoxGeometry(0.14, 0.12, 0.20);
+        const leftHand = new THREE.Mesh(leftHandGeo, skinMat);
+        leftHand.position.set(-0.08, -0.15, 0.02);
+        leftHand.rotation.z = 0.4;
+        leftHand.rotation.y = 0.3;
+
+        this.weaponGroup.add(rightHand, leftHand);
+
+        // Position of the whole weapon/hand group relative to the camera
+        this.weaponGroup.position.set(0.3, -0.35, -0.5);
         this.camera.add(this.weaponGroup);
         this.scene.add(this.camera); // Ensure camera is in scene to see its children
     }
