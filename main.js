@@ -259,23 +259,39 @@ class AimTrainer {
         const loader = new GLTFLoader();
         loader.load('./assets/pistol/source/Arcane Sheriff.glb', (gltf) => {
             const pistol = gltf.scene;
-            // Échelle et orientation à ajuster finement selon l'export du modèle
-            pistol.scale.set(0.04, 0.04, 0.04);
-            pistol.rotation.y = Math.PI;
-            pistol.position.set(0, 0.05, -0.1);
 
-            // Améliorer le rendu du pistolet
-            pistol.traverse((child) => {
-                if (child.isMesh) {
-                    child.material.metalness = 0.8;
-                    child.material.roughness = 0.2;
-                }
+            // Calculer la taille et le centre du modèle
+            const box = new THREE.Box3().setFromObject(pistol);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+
+            // Auto-scaling (On veut que l'arme fasse environ 0.3 unités de long)
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            const targetScale = 0.3 / maxDim;
+            pistol.scale.set(targetScale, targetScale, targetScale);
+
+            // Centrer l'objet par rapport à son origine
+            pistol.position.x = -center.x * targetScale;
+            pistol.position.y = -center.y * targetScale;
+            pistol.position.z = -center.z * targetScale;
+
+            // Mettre dans un groupe pour le manipuler globalement
+            const wrapper = new THREE.Group();
+            wrapper.add(pistol);
+
+            // Ajuster son orientation et sa position dans la main
+            wrapper.rotation.y = Math.PI;
+            wrapper.position.set(0.04, -0.05, -0.05);
+
+            this.weaponGroup.add(wrapper);
+            console.log("Pistol chargé avec succès !");
+        },
+            (xhr) => {
+                console.log((xhr.loaded / xhr.total * 100) + '% chargé');
+            },
+            (error) => {
+                console.error("Erreur de chargement du modèle 3D :", error);
             });
-
-            this.weaponGroup.add(pistol);
-        }, undefined, (error) => {
-            console.error("Erreur de chargement du modèle 3D :", error);
-        });
 
         // Modélisation des mains tenant l'arme de façon plus réaliste
         const skinMat = new THREE.MeshStandardMaterial({
