@@ -252,7 +252,7 @@ class AimTrainer {
 
         // Charger le modèle 3D du Sheriff Arcane
         const loader = new GLTFLoader();
-        loader.load('/assets/pistol/source/Arcane Sheriff.glb', (gltf) => {
+        loader.load('./assets/pistol/source/Arcane Sheriff.glb', (gltf) => {
             const pistol = gltf.scene;
             // Échelle et orientation à ajuster finement selon l'export du modèle
             pistol.scale.set(0.04, 0.04, 0.04);
