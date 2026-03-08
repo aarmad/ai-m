@@ -21,13 +21,14 @@ class AimTrainer {
         // Playlist Strac-aiM
         this.playlist = [
             { id: 'gridshot', name: 'GRIDSHOT', size: 0.45, spawnRate: 600, xRange: 14, yRange: 8, color: 0x00d2ff },
-            { id: 'tracking', name: 'SMOOTH TRACKING', size: 0.35, spawnRate: 0, xRange: 16, yRange: 6, color: 0xffaa00, type: 'tracking' },
+            { id: 'strafe_headshot', name: 'STRAFE HEADSHOT', size: 0.18, spawnRate: 600, xRange: 15, yRange: 0.1, color: 0xff4444, type: 'moving' },
+            { id: 'flick_headshot', name: 'FLICK HEADSHOT', size: 0.15, spawnRate: 500, xRange: 18, yRange: 0.1, color: 0x44ff44 },
             { id: 'microshot', name: 'MICROSHOT', size: 0.18, spawnRate: 800, xRange: 5, yRange: 3, color: 0xff00ff },
+            { id: 'moving_targets', name: 'MOVING ENEMIES', size: 0.25, spawnRate: 700, xRange: 20, yRange: 2, color: 0xffaa00, type: 'moving' },
             { id: 'sixshot', name: 'SIXSHOT', size: 0.12, spawnRate: 900, xRange: 12, yRange: 7, color: 0x00ff88 },
             { id: 'headshot', name: 'HEADSHOT', size: 0.18, spawnRate: 700, xRange: 15, yRange: 0.1, color: 0xffffff },
             { id: 'spidershot', name: 'SPIDERSHOT', size: 0.35, spawnRate: 750, xRange: 16, yRange: 9, color: 0xffaa00 },
             { id: 'reflex', name: 'REFLEX SHOT', size: 0.3, spawnRate: 350, xRange: 10, yRange: 5, color: 0x6ede8a },
-            { id: 'wallshot', name: 'WIDE WALL', size: 0.4, spawnRate: 650, xRange: 20, yRange: 4, color: 0x8800ff },
             { id: 'precision_final', name: 'PRECISION FINAL', size: 0.1, spawnRate: 1000, xRange: 8, yRange: 4, color: 0xff0000 }
         ];
         this.currentTaskIndex = 0;
@@ -56,13 +57,16 @@ class AimTrainer {
         // Movement variables (Valorant speed 5.4 m/s)
         this.moveSpeed = 5.4;
         this.clock = new THREE.Clock();
+        this.velocityY = 0; // Pour le saut
+        this.isJumping = false;
         this.keys = {
             w: false,
             a: false,
             s: false,
             d: false,
             z: false,
-            q: false
+            q: false,
+            ' ': false
         };
 
         // UI elements
@@ -291,39 +295,64 @@ class AimTrainer {
                 console.error("Erreur de chargement du modèle 3D :", error);
             });
 
-        // --- Mains ---
+        // --- Bras et Mains (Style Valorant) ---
         const skinMat = new THREE.MeshStandardMaterial({
-            color: 0xc68642,
-            roughness: 0.7,
-            metalness: 0.05
+            color: 0xc68642, // Peau
+            roughness: 0.6,
+            metalness: 0.1
+        });
+        
+        const sleeveMat = new THREE.MeshStandardMaterial({
+            color: 0x2a3b32, // Veste gris-vert foncée
+            roughness: 0.9,
+            metalness: 0.1
         });
 
-        // Paume / main droite (tient la poignée)
-        const palmGeo = new THREE.BoxGeometry(0.10, 0.13, 0.14);
-        const palm = new THREE.Mesh(palmGeo, skinMat);
-        palm.position.set(0, -0.09, 0.06);
-        palm.rotation.x = -0.3;
+        const gloveMat = new THREE.MeshStandardMaterial({
+            color: 0x1f1f1f, // Gants sombres
+            roughness: 0.8,
+            metalness: 0.2
+        });
 
-        // Doigts (4 doigts regroupés)
-        const fingersGeo = new THREE.BoxGeometry(0.10, 0.05, 0.14);
-        const fingers = new THREE.Mesh(fingersGeo, skinMat);
-        fingers.position.set(0, -0.16, 0.04);
-        fingers.rotation.x = -0.5;
+        // 1. Avant-bras droit (Manche)
+        const rightArmGeo = new THREE.CylinderGeometry(0.05, 0.08, 0.3, 16);
+        const rightArm = new THREE.Mesh(rightArmGeo, sleeveMat);
+        rightArm.position.set(0.1, -0.2, 0.15);
+        rightArm.rotation.x = -1.2;
+        rightArm.rotation.z = 0.3;
 
-        // Pouce
-        const thumbGeo = new THREE.BoxGeometry(0.04, 0.09, 0.06);
-        const thumb = new THREE.Mesh(thumbGeo, skinMat);
-        thumb.position.set(-0.07, -0.07, 0.02);
-        thumb.rotation.z = 0.5;
-        thumb.rotation.x = 0.2;
+        // 2. Main droite (Peau et gant)
+        const rightPalmGeo = new THREE.BoxGeometry(0.08, 0.1, 0.1);
+        const rightPalm = new THREE.Mesh(rightPalmGeo, skinMat);
+        rightPalm.position.set(0, -0.06, 0.04);
+        rightPalm.rotation.x = -0.2;
 
-        // Bras / avant-bras visible en bas
-        const wristGeo = new THREE.BoxGeometry(0.11, 0.22, 0.12);
-        const wrist = new THREE.Mesh(wristGeo, skinMat);
-        wrist.position.set(0.01, -0.28, 0.10);
-        wrist.rotation.x = -0.1;
+        const rightFingersGeo = new THREE.BoxGeometry(0.09, 0.08, 0.04);
+        const rightFingers = new THREE.Mesh(rightFingersGeo, gloveMat); // Doigts gantés
+        rightFingers.position.set(0, -0.1, 0.01);
+        rightFingers.rotation.x = -0.5;
 
-        this.weaponGroup.add(palm, fingers, thumb, wrist);
+        const rightThumbGeo = new THREE.BoxGeometry(0.03, 0.08, 0.04);
+        const rightThumb = new THREE.Mesh(rightThumbGeo, skinMat);
+        rightThumb.position.set(-0.05, -0.05, 0.03);
+        rightThumb.rotation.z = 0.5;
+        rightThumb.rotation.x = 0.2;
+
+        // 3. Bras gauche (En soutien sous le pistolet)
+        const leftArmGeo = new THREE.CylinderGeometry(0.05, 0.07, 0.25, 16);
+        const leftArm = new THREE.Mesh(leftArmGeo, sleeveMat);
+        leftArm.position.set(-0.15, -0.25, 0.1);
+        leftArm.rotation.x = -1.0;
+        leftArm.rotation.z = -0.5;
+
+        const leftPalmGeo = new THREE.BoxGeometry(0.09, 0.08, 0.08);
+        const leftPalm = new THREE.Mesh(leftPalmGeo, skinMat);
+        leftPalm.position.set(-0.04, -0.12, 0.03);
+        leftPalm.rotation.z = 0.3;
+        leftPalm.rotation.y = 0.4;
+        leftPalm.rotation.x = -0.4;
+
+        this.weaponGroup.add(rightArm, rightPalm, rightFingers, rightThumb, leftArm, leftPalm);
 
         // Positionner l'ensemble arme+mains en bas à droite de l'écran
         this.weaponGroup.position.set(0.15, -0.22, -0.35);
@@ -528,11 +557,6 @@ class AimTrainer {
         // Clear targets on switch
         this.targets.forEach(t => this.scene.remove(t));
         this.targets = [];
-
-        // If tracking, spawn 1 initial target
-        if (task.type === 'tracking') {
-            this.spawnTarget();
-        }
     }
 
     parseCrosshairCode(code) {
@@ -665,7 +689,8 @@ class AimTrainer {
 
     spawnTarget() {
         const task = this.playlist[this.currentTaskIndex];
-        const geometry = new THREE.SphereGeometry(task.size, 32, 32);
+        
+        let target;
         const material = new THREE.MeshStandardMaterial({
             color: task.color,
             emissive: task.color,
@@ -673,23 +698,41 @@ class AimTrainer {
             metalness: 0.8,
             roughness: 0.2
         });
-        const target = new THREE.Mesh(geometry, material);
+
+        if (task.type === 'moving') {
+            // Créer une géométrie de capsule (Style "Personnage") au lieu d'une sphère
+            // Radius: task.size, Length: task.size * 2
+            const geometry = new THREE.CapsuleGeometry(task.size, task.size * 2, 8, 16);
+            target = new THREE.Mesh(geometry, material);
+        } else {
+            // Cible classique (Sphère)
+            const geometry = new THREE.SphereGeometry(task.size, 32, 32);
+            target = new THREE.Mesh(geometry, material);
+        }
 
         // Calculate safe Y range (Floor at -3)
-        const minY = -2.5 + task.size;
+        // Les capsules sont plus grandes donc on ajuste pour ne pas clipper le sol
+        const heightModifier = (task.type === 'moving') ? (task.size * 2) : 0;
+        const minY = -2.5 + task.size + heightModifier;
         const maxY = 5 - task.size;
 
         target.position.x = (Math.random() - 0.5) * task.xRange;
-        target.position.y = (task.id === 'headshot') ? 0 : (Math.random() * (maxY - minY) + minY);
+        
+        if (task.id.includes('headshot')) {
+            target.position.y = 1.0; // Hauteur constante pour les exercices headshot (à hauteur d'yeux)
+        } else if (task.type === 'moving') {
+            target.position.y = minY; // Les personnages marchent sur le sol
+        } else {
+            target.position.y = (Math.random() * (maxY - minY) + minY);
+        }
+        
         target.position.z = -5;
 
-        if (task.type === 'tracking') {
-            target.velocity = new THREE.Vector3(
-                (Math.random() - 0.5) * 0.1,
-                (Math.random() - 0.5) * 0.1,
-                0
-            );
-            target.isTrackingTarget = true;
+        if (task.type === 'moving') {
+            const dir = Math.random() < 0.5 ? -1 : 1;
+            const speed = 2.0 + Math.random() * 3.0; // Vitesse de déplacement du personnage
+            target.velocity = new THREE.Vector3(dir * speed, 0, 0);
+            target.isMovingTarget = true;
         }
 
         this.scene.add(target);
@@ -780,29 +823,16 @@ class AimTrainer {
                 this.endGame();
             }
 
-            // Tracking logic
-            const task = this.playlist[this.currentTaskIndex];
-            if (task.id === 'tracking') {
-                this.handleTracking(now);
-            }
-
-            // Continuous spawning logic
-            if (task.spawnRate > 0 && now - this.lastSpawnTime > this.spawnDelay) {
-                if (this.targets.length < 5) { // Limit number of targets on screen
-                    this.spawnTarget();
-                    this.lastSpawnTime = now;
-                }
-            }
-
-            // Subtle target animation & Tracking movement
+            // Subtle target animation & Tracking/Moving movement
             this.targets.forEach(t => {
-                if (t.isTrackingTarget) {
-                    t.position.x += t.velocity.x;
-                    t.position.y += t.velocity.y;
-
-                    // Bounce off boundaries
-                    if (Math.abs(t.position.x) > task.xRange / 2) t.velocity.x *= -1;
-                    if (Math.abs(t.position.y) > task.yRange / 2) t.velocity.y *= -1;
+                if (t.isMovingTarget) {
+                    t.position.x += t.velocity.x * (now - this.lastSpawnTime > 0 ? 0.016 : 0); // Approximation du delta pour le mouvement
+                    
+                    // Rebond sur les bords
+                    if (Math.abs(t.position.x) > task.xRange / 2) {
+                        t.velocity.x *= -1;
+                        t.position.x = Math.sign(t.position.x) * task.xRange / 2;
+                    }
                 }
 
                 t.scale.x = 1 + Math.sin(now * 0.005) * 0.05;
@@ -812,30 +842,6 @@ class AimTrainer {
         }
 
         this.renderer.render(this.scene, this.camera);
-    }
-
-    handleTracking(now) {
-        // For tracking, we don't count "clicks" but continuous alignment
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        const intersects = this.raycaster.intersectObjects(this.targets);
-
-        if (intersects.length > 0) {
-            this.score += 2; // Continuous small points
-            this.hits += 0.02; // Hack to keep accuracy sensible
-            this.clicks += 0.02;
-
-            // Subtle tracking sound (low frequency tick)
-            if (Math.random() < 0.1) { // Don't play every frame to avoid noise
-                this.playNotificationSound('target-hit', 'tracking');
-            }
-
-            // Visual feedback
-            intersects[0].object.material.emissiveIntensity = 2.0;
-        } else {
-            this.clicks += 0.02;
-            this.targets.forEach(t => t.material.emissiveIntensity = 0.5);
-        }
-        this.updateHUD();
     }
 
     handleMovement() {
@@ -858,6 +864,23 @@ class AimTrainer {
         if (direction.length() > 0) {
             direction.normalize().multiplyScalar(this.moveSpeed * delta);
             this.camera.position.add(direction);
+        }
+
+        // --- Saut / Gravité ---
+        // On considère que y = 5 est la hauteur "normale" des yeux (définie dans setupRenderer)
+        const eyeHeight = 5;
+        this.velocityY -= 15.0 * delta; // Gravité
+        this.camera.position.y += this.velocityY * delta;
+
+        if (this.camera.position.y <= eyeHeight) {
+            this.camera.position.y = eyeHeight;
+            this.velocityY = 0;
+            this.isJumping = false;
+        }
+
+        if (this.keys[' '] && !this.isJumping) {
+            this.velocityY = 6.0; // Force du saut
+            this.isJumping = true;
         }
 
         // Simple boundaries
