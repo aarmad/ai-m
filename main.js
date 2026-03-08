@@ -295,67 +295,9 @@ class AimTrainer {
                 console.error("Erreur de chargement du modèle 3D :", error);
             });
 
-        // --- Bras et Mains (Style Valorant) ---
-        const skinMat = new THREE.MeshStandardMaterial({
-            color: 0xc68642, // Peau
-            roughness: 0.6,
-            metalness: 0.1
-        });
-        
-        const sleeveMat = new THREE.MeshStandardMaterial({
-            color: 0x2a3b32, // Veste gris-vert foncée
-            roughness: 0.9,
-            metalness: 0.1
-        });
-
-        const gloveMat = new THREE.MeshStandardMaterial({
-            color: 0x1f1f1f, // Gants sombres
-            roughness: 0.8,
-            metalness: 0.2
-        });
-
-        // 1. Avant-bras droit (Manche)
-        const rightArmGeo = new THREE.CylinderGeometry(0.05, 0.08, 0.3, 16);
-        const rightArm = new THREE.Mesh(rightArmGeo, sleeveMat);
-        rightArm.position.set(0.1, -0.2, 0.15);
-        rightArm.rotation.x = -1.2;
-        rightArm.rotation.z = 0.3;
-
-        // 2. Main droite (Peau et gant)
-        const rightPalmGeo = new THREE.BoxGeometry(0.08, 0.1, 0.1);
-        const rightPalm = new THREE.Mesh(rightPalmGeo, skinMat);
-        rightPalm.position.set(0, -0.06, 0.04);
-        rightPalm.rotation.x = -0.2;
-
-        const rightFingersGeo = new THREE.BoxGeometry(0.09, 0.08, 0.04);
-        const rightFingers = new THREE.Mesh(rightFingersGeo, gloveMat); // Doigts gantés
-        rightFingers.position.set(0, -0.1, 0.01);
-        rightFingers.rotation.x = -0.5;
-
-        const rightThumbGeo = new THREE.BoxGeometry(0.03, 0.08, 0.04);
-        const rightThumb = new THREE.Mesh(rightThumbGeo, skinMat);
-        rightThumb.position.set(-0.05, -0.05, 0.03);
-        rightThumb.rotation.z = 0.5;
-        rightThumb.rotation.x = 0.2;
-
-        // 3. Bras gauche (En soutien sous le pistolet)
-        const leftArmGeo = new THREE.CylinderGeometry(0.05, 0.07, 0.25, 16);
-        const leftArm = new THREE.Mesh(leftArmGeo, sleeveMat);
-        leftArm.position.set(-0.15, -0.25, 0.1);
-        leftArm.rotation.x = -1.0;
-        leftArm.rotation.z = -0.5;
-
-        const leftPalmGeo = new THREE.BoxGeometry(0.09, 0.08, 0.08);
-        const leftPalm = new THREE.Mesh(leftPalmGeo, skinMat);
-        leftPalm.position.set(-0.04, -0.12, 0.03);
-        leftPalm.rotation.z = 0.3;
-        leftPalm.rotation.y = 0.4;
-        leftPalm.rotation.x = -0.4;
-
-        this.weaponGroup.add(rightArm, rightPalm, rightFingers, rightThumb, leftArm, leftPalm);
-
-        // Positionner l'ensemble arme+mains en bas à droite de l'écran
-        this.weaponGroup.position.set(0.15, -0.22, -0.35);
+        // Modélisation géométrique des mains supprimée pour correspondre au visuel net demandé.
+        // On place juste l'arme parfaitement façon "Viewmodel" de Valorant.
+        this.weaponGroup.position.set(0.15, -0.25, -0.40);
         this.camera.add(this.weaponGroup);
         this.scene.add(this.camera);
     }
@@ -821,6 +763,15 @@ class AimTrainer {
 
             if (remainingTotal <= 0) {
                 this.endGame();
+            }
+
+            // Continuous spawning logic
+            const task = this.playlist[this.currentTaskIndex];
+            if (task.spawnRate > 0 && now - this.lastSpawnTime > this.spawnDelay) {
+                if (this.targets.length < 5) { // Limit number of targets on screen
+                    this.spawnTarget();
+                    this.lastSpawnTime = now;
+                }
             }
 
             // Subtle target animation & Tracking/Moving movement
