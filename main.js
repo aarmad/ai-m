@@ -20,14 +20,11 @@ class AimTrainer {
         this.pitch = 0;
         // Playlist Strac-aiM
         this.playlist = [
-            { id: 'gridshot', name: 'GRIDSHOT', size: 0.45, spawnRate: 600, xRange: 14, yRange: 8, color: 0x00d2ff },
             { id: 'strafe_headshot', name: 'STRAFE HEADSHOT', size: 0.18, spawnRate: 600, xRange: 15, yRange: 0.1, color: 0xff4444, type: 'moving' },
             { id: 'flick_headshot', name: 'FLICK HEADSHOT', size: 0.15, spawnRate: 500, xRange: 18, yRange: 0.1, color: 0x44ff44 },
-            { id: 'microshot', name: 'MICROSHOT', size: 0.18, spawnRate: 800, xRange: 5, yRange: 3, color: 0xff00ff },
+            { id: 'gridshot', name: 'GRIDSHOT', size: 0.45, spawnRate: 600, xRange: 14, yRange: 8, color: 0x00d2ff },
             { id: 'moving_targets', name: 'MOVING ENEMIES', size: 0.25, spawnRate: 700, xRange: 20, yRange: 2, color: 0xffaa00, type: 'moving' },
-            { id: 'sixshot', name: 'SIXSHOT', size: 0.12, spawnRate: 900, xRange: 12, yRange: 7, color: 0x00ff88 },
             { id: 'headshot', name: 'HEADSHOT', size: 0.18, spawnRate: 700, xRange: 15, yRange: 0.1, color: 0xffffff },
-            { id: 'spidershot', name: 'SPIDERSHOT', size: 0.35, spawnRate: 750, xRange: 16, yRange: 9, color: 0xffaa00 },
             { id: 'reflex', name: 'REFLEX SHOT', size: 0.3, spawnRate: 350, xRange: 10, yRange: 5, color: 0x6ede8a },
             { id: 'precision_final', name: 'PRECISION FINAL', size: 0.1, spawnRate: 1000, xRange: 8, yRange: 4, color: 0xff0000 }
         ];
@@ -54,8 +51,8 @@ class AimTrainer {
         this.spawnedTargetsAt = new Map(); // target.uuid -> timestamp
         this.isPaused = false;
 
-        // Movement variables (Valorant speed 5.4 m/s)
-        this.moveSpeed = 5.4;
+        // Movement variables (Valorant speed ~5.4 m/s -> increased to 7.5 for light/fast feel)
+        this.moveSpeed = 7.5;
         this.clock = new THREE.Clock();
         this.velocityY = 0; // Pour le saut
         this.isJumping = false;
@@ -254,27 +251,23 @@ class AimTrainer {
     setupWeapon() {
         this.weaponGroup = new THREE.Group();
 
-        // Lumière attachée à la caméra pour toujours éclairer l'arme et les mains
-        const viewLight = new THREE.PointLight(0xffffff, 1.2, 5);
-        viewLight.position.set(0, 0.3, -0.2);
+        // Lumière attachée à la caméra pour éclairer l'arme et les bras
+        const viewLight = new THREE.PointLight(0xffffff, 1.8, 5);
+        viewLight.position.set(0, 0.5, 0.5);
         this.camera.add(viewLight);
 
-        // Charger le modèle 3D du Sheriff Arcane
+        // Charger le modèle 3D du Sheriff Arcane (Canon vers +X par défaut)
         const loader = new GLTFLoader();
         loader.load('./assets/pistol/source/Arcane Sheriff.glb', (gltf) => {
             const pistol = gltf.scene;
-
-            // Calculer la taille et le centre du modèle
             const box = new THREE.Box3().setFromObject(pistol);
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
 
-            // Auto-scaling — arme ~0.3 unités de long
             const maxDim = Math.max(size.x, size.y, size.z) || 1;
             const targetScale = 0.3 / maxDim;
             pistol.scale.set(targetScale, targetScale, targetScale);
 
-            // Centrer l'objet
             pistol.position.x = -center.x * targetScale;
             pistol.position.y = -center.y * targetScale;
             pistol.position.z = -center.z * targetScale;
@@ -282,22 +275,39 @@ class AimTrainer {
             const wrapper = new THREE.Group();
             wrapper.add(pistol);
 
-            // Le canon du GLB pointe le long de l'axe X positif selon le screenshot.
-            // Pour le faire pointer vers -Z (en avant dans Three.js), on tourne de +PI/2 sur Y.
-            wrapper.rotation.y = Math.PI / 2;
-            // Légère inclinaison vers le bas pour avoir l'angle "viewmodel"
-            wrapper.rotation.x = 0.08;
+            // Pour regarder le cul du Sheriff : rotation de -90 sur Y pour que le canon (X) aille vers -Z
+            wrapper.rotation.y = -Math.PI / 2;
+            wrapper.rotation.x = 0.15; // Légèrement incliné pour voir le dessus du chien
 
             this.weaponGroup.add(wrapper);
-        },
-            undefined,
-            (error) => {
-                console.error("Erreur de chargement du modèle 3D :", error);
-            });
+        });
 
-        // Modélisation géométrique des mains supprimée pour correspondre au visuel net demandé.
-        // On place juste l'arme parfaitement façon "Viewmodel" de Valorant.
-        this.weaponGroup.position.set(0.15, -0.25, -0.40);
+        // --- Bras et Mains stylisés (Style Image 2) ---
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0x8d5524 }); // Peau foncée
+        const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x222222 }); // Tissu noir
+
+        // Bras droit (Tenant le Sheriff)
+        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.5, 12), sleeveMat);
+        armR.position.set(0.12, -0.28, 0.15);
+        armR.rotation.x = -Math.PI / 3;
+        armR.rotation.z = -0.3;
+        
+        const handR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.09), skinMat);
+        handR.position.set(0.05, -0.15, 0.0);
+        this.weaponGroup.add(armR, handR);
+
+        // Bras gauche (Supportant par dessous ou sur le côté)
+        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.5, 12), sleeveMat);
+        armL.position.set(-0.18, -0.32, 0.15);
+        armL.rotation.x = -Math.PI / 3.5;
+        armL.rotation.z = 0.4;
+
+        const handL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.09), skinMat);
+        handL.position.set(-0.06, -0.18, 0.02);
+        this.weaponGroup.add(armL, handL);
+
+        // Positionner l'ensemble au centre/bas (Image 2)
+        this.weaponGroup.position.set(0, -0.25, -0.35);
         this.camera.add(this.weaponGroup);
         this.scene.add(this.camera);
     }
@@ -485,6 +495,15 @@ class AimTrainer {
         this.ui.results.classList.add('hidden');
         this.ui.hud.classList.remove('hidden');
         this.updateHUD();
+
+        // Request fullscreen
+        if (this.canvas.requestFullscreen) {
+            this.canvas.requestFullscreen();
+        } else if (this.canvas.webkitRequestFullscreen) {
+            this.canvas.webkitRequestFullscreen();
+        } else if (this.canvas.msRequestFullscreen) {
+            this.canvas.msRequestFullscreen();
+        }
     }
 
     updateCurrentTask() {
@@ -659,14 +678,8 @@ class AimTrainer {
         const maxY = 5 - task.size;
 
         target.position.x = (Math.random() - 0.5) * task.xRange;
-        
-        if (task.id.includes('headshot')) {
-            target.position.y = 1.0; // Hauteur constante pour les exercices headshot (à hauteur d'yeux)
-        } else if (task.type === 'moving') {
-            target.position.y = minY; // Les personnages marchent sur le sol
-        } else {
-            target.position.y = (Math.random() * (maxY - minY) + minY);
-        }
+        // Toujours au niveau de la tête (eyeHeight = 5)
+        target.position.y = 5.0 + (Math.random() * 0.2 - 0.1); 
         
         target.position.z = -5;
 
