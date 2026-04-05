@@ -80,6 +80,7 @@ class AimTrainer {
             startBtn: document.getElementById('start-btn'),
             retryBtn: document.getElementById('retry-btn'),
             quitBtn: document.getElementById('quit-btn'),
+            fullscreenBtn: document.getElementById('fullscreen-btn'),
             sensitivityInput: document.getElementById('sensitivity'),
             sensitivityNum: document.getElementById('sensitivity-num'),
             crosshairCodeInput: document.getElementById('crosshair-code'),
@@ -305,11 +306,11 @@ class AimTrainer {
         this.weaponGroup.add(armL, handL);
 
         // --- Positionnement de l'arme façon Valorant (Image 2) ---
-        // On la met légèrement à droite (x=0.22) et plus bas (y=-0.35)
-        this.weaponGroup.position.set(0.22, -0.35, -0.40);
-        // On l'oriente légèrement vers le centre de l'écran pour viser le crosshair
-        this.weaponGroup.rotation.y = -0.12;
-        this.weaponGroup.rotation.x = -0.05;
+        // On la remet un peu plus vers le centre car elle était trop basse/droite
+        this.weaponGroup.position.set(0.12, -0.18, -0.40);
+        // On l'oriente vers le centre (0,0) avec un angle plus marqué
+        this.weaponGroup.rotation.y = -0.05;
+        this.weaponGroup.rotation.x = 0;
 
         this.camera.add(this.weaponGroup);
         this.scene.add(this.camera);
@@ -389,6 +390,13 @@ class AimTrainer {
         this.ui.retryBtn.addEventListener('click', () => this.startGame());
 
         this.ui.quitBtn.addEventListener('click', () => this.quitSession());
+        this.ui.fullscreenBtn.addEventListener('click', () => {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen();
+            }
+        });
 
         // Movement listeners
         window.addEventListener('keydown', (e) => {
@@ -499,13 +507,14 @@ class AimTrainer {
         this.ui.hud.classList.remove('hidden');
         this.updateHUD();
 
-        // Request fullscreen
-        if (this.canvas.requestFullscreen) {
-            this.canvas.requestFullscreen();
-        } else if (this.canvas.webkitRequestFullscreen) {
-            this.canvas.webkitRequestFullscreen();
-        } else if (this.canvas.msRequestFullscreen) {
-            this.canvas.msRequestFullscreen();
+        // Request fullscreen on the WHOLE document to keep HUD/DOM visible
+        const root = document.documentElement;
+        if (root.requestFullscreen) {
+            root.requestFullscreen();
+        } else if (root.webkitRequestFullscreen) {
+            root.webkitRequestFullscreen();
+        } else if (root.msRequestFullscreen) {
+            root.msRequestFullscreen();
         }
     }
 
