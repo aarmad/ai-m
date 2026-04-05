@@ -10,6 +10,8 @@
     --font-mono: 'JetBrains Mono', monospace;
     --ch-width: 20px;
     --ch-thickness: 2px;
+    --ch-length: 6px;
+    --ch-offset: 3px;
 }
 
 * {

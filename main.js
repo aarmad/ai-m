@@ -18,12 +18,10 @@ class AimTrainer {
         this.sensitivity = 0.25; // New default sensitivity
         this.yaw = 0;
         this.pitch = 0;
-        // Playlist Strac-aiM
+        // Playlist Strac-aiM (Aucun exercice de tracking)
         this.playlist = [
-            { id: 'strafe_headshot', name: 'STRAFE HEADSHOT', size: 0.18, spawnRate: 600, xRange: 15, yRange: 0.1, color: 0xff4444, type: 'moving' },
             { id: 'flick_headshot', name: 'FLICK HEADSHOT', size: 0.15, spawnRate: 500, xRange: 18, yRange: 0.1, color: 0x44ff44 },
             { id: 'gridshot', name: 'GRIDSHOT', size: 0.45, spawnRate: 600, xRange: 14, yRange: 8, color: 0x00d2ff },
-            { id: 'moving_targets', name: 'MOVING ENEMIES', size: 0.25, spawnRate: 700, xRange: 20, yRange: 2, color: 0xffaa00, type: 'moving' },
             { id: 'headshot', name: 'HEADSHOT', size: 0.18, spawnRate: 700, xRange: 15, yRange: 0.1, color: 0xffffff },
             { id: 'reflex', name: 'REFLEX SHOT', size: 0.3, spawnRate: 350, xRange: 10, yRange: 5, color: 0x6ede8a },
             { id: 'precision_final', name: 'PRECISION FINAL', size: 0.1, spawnRate: 1000, xRange: 8, yRange: 4, color: 0xff0000 }
@@ -296,7 +294,7 @@ class AimTrainer {
         handR.position.set(0.05, -0.15, 0.0);
         this.weaponGroup.add(armR, handR);
 
-        // Bras gauche (Supportant par dessous ou sur le côté)
+        // Bras gauche
         const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.5, 12), sleeveMat);
         armL.position.set(-0.18, -0.32, 0.15);
         armL.rotation.x = -Math.PI / 3.5;
@@ -306,8 +304,13 @@ class AimTrainer {
         handL.position.set(-0.06, -0.18, 0.02);
         this.weaponGroup.add(armL, handL);
 
-        // Positionner l'ensemble au centre/bas (Image 2)
-        this.weaponGroup.position.set(0, -0.25, -0.35);
+        // --- Positionnement de l'arme façon Valorant (Image 2) ---
+        // On la met légèrement à droite (x=0.22) et plus bas (y=-0.35)
+        this.weaponGroup.position.set(0.22, -0.35, -0.40);
+        // On l'oriente légèrement vers le centre de l'écran pour viser le crosshair
+        this.weaponGroup.rotation.y = -0.12;
+        this.weaponGroup.rotation.x = -0.05;
+
         this.camera.add(this.weaponGroup);
         this.scene.add(this.camera);
     }
