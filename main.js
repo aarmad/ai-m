@@ -272,10 +272,10 @@ class AimTrainer {
 
             const wrapper = new THREE.Group();
             wrapper.add(pistol);
-
-            // Pour regarder le cul du Sheriff : rotation de -90 sur Y pour que le canon (X) aille vers -Z
-            wrapper.rotation.y = -Math.PI / 2;
+            // Pour regarder le cul du Sheriff : rotation de +90 sur Y pour que le canon (X) aille vers -Z (en avant)
+            wrapper.rotation.y = Math.PI / 2;
             wrapper.rotation.x = 0.15; // Légèrement incliné pour voir le dessus du chien
+            wrapper.rotation.z = -0.05; // Légère inclinaison "viewmodel"
 
             this.weaponGroup.add(wrapper);
         });
