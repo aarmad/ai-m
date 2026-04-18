@@ -255,64 +255,62 @@ class AimTrainer {
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
 
-            // Big scale — fills the lower-right like Valorant viewmodel
-            const targetScale = 0.85 / Math.max(size.x, size.y, size.z, 1);
+            // Scale: slightly bigger than original (0.3) but not huge
+            const targetScale = 0.42 / Math.max(size.x, size.y, size.z, 1);
             pistol.scale.setScalar(targetScale);
             pistol.position.set(-center.x * targetScale, -center.y * targetScale, -center.z * targetScale);
 
             const wrapper = new THREE.Group();
             wrapper.add(pistol);
-            // Barrel is originally on the +X axis of the model.
-            // Ry(3π/4) → barrel now points left-forward in camera space (-X, -Z)
-            // → we see the RIGHT SIDE of the gun, like a proper Valorant viewmodel.
-            // Small X tilt (-0.12) so barrel tilts slightly upward (natural hold).
-            // Small Z roll (0.1) so grip angles naturally into the hand.
-            wrapper.rotation.set(-0.12, 3 * Math.PI / 4, 0.10);
+            // Barrel originally on +X axis.
+            // Ry(3π/4): barrel goes to (-X,-Z)/√2 → we see the RIGHT SIDE of the gun.
+            // Rx(-0.10): barrel tips slightly upward (natural hold angle).
+            // Rz(0.06): slight roll so grip falls naturally toward the hand.
+            wrapper.rotation.set(-0.10, 3 * Math.PI / 4, 0.06);
             this.weaponGroup.add(wrapper);
         });
 
-        // --- Arms & hands matching the reference image ---
         const skinMat   = new THREE.MeshStandardMaterial({ color: 0x7a4219, roughness: 0.65 });
         const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.85 });
 
-        // Right forearm — comes from the bottom-right edge of screen
-        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 0.6, 16), sleeveMat);
-        armR.position.set(0.04, -0.60, 0.22);
-        armR.rotation.set(-Math.PI / 2.4, 0, -0.20);
+        // Right forearm — comes from bottom-right
+        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.55, 16), sleeveMat);
+        armR.position.set(0.08, -0.32, 0.14);
+        armR.rotation.set(-Math.PI / 2.8, 0, -0.22);
 
-        // Right hand gripping the pistol handle
-        const handR = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.13, 0.12), skinMat);
-        handR.position.set(0.03, -0.38, 0.08);
+        // Right hand gripping the handle
+        const handR = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.11, 0.10), skinMat);
+        handR.position.set(0.04, -0.19, 0.04);
         handR.rotation.set(0.1, 0, -0.08);
 
-        // Thumb on the side
-        const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.07), skinMat);
-        thumb.position.set(-0.06, -0.34, 0.06);
-        thumb.rotation.set(0.1, -0.3, 0.25);
+        // Thumb
+        const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.05, 0.06), skinMat);
+        thumb.position.set(-0.04, -0.16, 0.02);
+        thumb.rotation.set(0.1, -0.3, 0.22);
 
-        // Left forearm — support, comes from further left and lower
-        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.55, 16), sleeveMat);
-        armL.position.set(-0.18, -0.58, 0.20);
-        armL.rotation.set(-Math.PI / 2.6, 0, 0.30);
+        // Left forearm — support
+        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.50, 16), sleeveMat);
+        armL.position.set(-0.10, -0.35, 0.14);
+        armL.rotation.set(-Math.PI / 2.8, 0, 0.30);
 
-        // Left hand — support under the barrel
-        const handL = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.11, 0.11), skinMat);
-        handL.position.set(-0.14, -0.40, 0.06);
+        // Left hand — under the barrel
+        const handL = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.10, 0.10), skinMat);
+        handL.position.set(-0.08, -0.23, 0.03);
         handL.rotation.set(0.1, 0.1, 0.12);
 
-        // Yellow wrist band (visible in the reference image)
+        // Yellow wrist band
         const bandMat = new THREE.MeshStandardMaterial({ color: 0xd4a017, roughness: 0.45, metalness: 0.4 });
-        const band = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.013, 8, 24), bandMat);
-        band.position.set(0.04, -0.52, 0.27);
-        band.rotation.set(-Math.PI / 2.4, 0, -0.20);
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.012, 8, 24), bandMat);
+        band.position.set(0.08, -0.28, 0.18);
+        band.rotation.set(-Math.PI / 2.8, 0, -0.22);
 
         this.weaponGroup.add(armR, handR, thumb, armL, handL, band);
 
-        // Group position: bottom-right, very close to camera
-        // x: right | y: low | z: close (less negative = closer = bigger on screen)
-        this.weaponGroup.position.set(0.20, -0.36, -0.24);
-        // Slight inward Y tilt to aim barrel toward crosshair, slight Z roll
-        this.weaponGroup.rotation.set(0.04, -0.08, 0.02);
+        // Position matches the original that was visually correct (y=-0.18, z=-0.40)
+        // Slightly adjusted: more right (+x), same depth
+        this.weaponGroup.position.set(0.14, -0.18, -0.40);
+        // Angle group inward so barrel points roughly toward crosshair
+        this.weaponGroup.rotation.set(0, -0.12, 0.03);
 
         this.camera.add(this.weaponGroup);
         this.scene.add(this.camera);
