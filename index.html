@@ -32,13 +32,14 @@
             <div class="stat-box">
                 <span class="label">SCORE</span>
                 <span id="score" class="value">000</span>
+                <span id="streak" class="streak-label"></span>
             </div>
             <div class="stat-box central">
                 <span id="current-task" class="label accent">GRIDSHOT</span>
                 <span id="timer" class="value">10:00</span>
-                <span id="next-task-timer" class="label" style="font-size: 0.6rem;">NEXT TASK: 60s</span>
+                <span id="next-task-timer" class="label" style="font-size: 0.6rem;">NEXT: 60s</span>
             </div>
-            <div class="stat-box">
+            <div class="stat-box" style="align-items: flex-end;">
                 <span class="label">ACCURACY</span>
                 <span id="accuracy" class="value">100%</span>
             </div>
@@ -49,6 +50,10 @@
             <div id="ch-bottom" class="ch-line ch-bottom"></div>
             <div id="ch-left" class="ch-line ch-left"></div>
             <div id="ch-right" class="ch-line ch-right"></div>
+        </div>
+        <div class="tip-bar-wrapper">
+            <span class="tip-bar-icon">💡</span>
+            <span id="tip-bar" class="tip-bar-text">Counter-strafe avant de tirer pour une précision maximale.</span>
         </div>
     </div>
 
@@ -96,6 +101,10 @@
             <h2>SESSION <span class="accent">TERMINÉE</span></h2>
 
             <div class="stats-grid">
+                <div class="result-stat grade-stat">
+                    <span class="label">RANG</span>
+                    <span id="res-grade" class="value grade-value">—</span>
+                </div>
                 <div class="result-stat">
                     <span class="label">SCORE FINAL</span>
                     <span id="res-score" class="value">0</span>
@@ -108,6 +117,11 @@
                     <span class="label">TEMPS DE RÉACTION</span>
                     <span id="res-reaction" class="value">0ms</span>
                 </div>
+            </div>
+
+            <div class="mode-stats-box">
+                <span class="label">PAR EXERCICE</span>
+                <div id="res-mode-stats" class="mode-stats-grid"></div>
             </div>
 
             <div id="stats-analysis" class="analysis-box">
